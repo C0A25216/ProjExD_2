@@ -3,6 +3,7 @@ import sys
 import pygame as pg
 import random
 import time
+import math
 
 
 WIDTH, HEIGHT = 1100, 650
@@ -83,6 +84,36 @@ def get_kk_imgs(kk_img: pg.Surface) -> dict[tuple[int, int], pg.Surface]:
         }
     return kk_dict
 
+#爆弾追従
+def calc_orientation(
+        org: pg.Rect, 
+        dst: pg.Rect, 
+        current_xy: tuple[float, float])-> tuple[float, float]:
+    """
+    爆弾からこうかとんへの方向ベクトルを計算する
+    引数：
+    org: 爆弾Rect
+    dst: こうかとんRect
+    current_xy: 現在の速度ベクトル
+    戻り値：
+    正規化された方向ベクトル
+    """
+    dx = dst.centerx - org.centerx
+    dy = dst.centery - org.centery
+
+    dist = math.sqrt(dx**2 + dy**2)
+
+    # 近すぎるときはそのまま
+    if dist < 300:
+        return current_xy
+
+    # 正規化（長さ√50 ≒ 7.07）
+    if dist != 0:
+        dx = dx / dist * 7
+        dy = dy / dist * 7
+        
+    return dx, dy
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -117,15 +148,20 @@ def main():
         avx = vx*bb_accs[min(tmr//500, 9)] #このavxとavyをmove_ipメソッドに渡す
         avy = vy*bb_accs[min(tmr//500, 9)]
         bb_img = bb_imgs[min(tmr//500, 9)]
-        bb_rct.move_ip(avx, avy)
-
         
+        #大きくなったときのサイズ変更
+        bb_rct.width = bb_img.get_rect().width
+        bb_rct.height = bb_img.get_rect().height
+
         #跳ね返り
         yoko, tate = check_bound(bb_rct)
         if not yoko:  
             vx *= -1 
         if not tate:  
             vy *= -1  
+
+        #4.追尾
+        vx, vy = calc_orientation(bb_rct, kk_rct, (vx, vy))
 
         #こうかとん移動
         key_lst = pg.key.get_pressed()
@@ -139,18 +175,22 @@ def main():
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
         screen.blit(kk_img, kk_rct)
 
-        bb_rct.move_ip(vx, vy) 
-        screen.blit(bb_img, bb_rct)
-
         #3 辞書から取り出す
         kk_img = kk_imgs[tuple(sum_mv)]
+
+        #表示
+        screen.blit(bb_img, bb_rct)
+        screen.blit(kk_img, kk_rct)
+        
 
         #ゲームオーバー
         if kk_rct.colliderect(bb_rct):
             gameover(screen)
             print("ゲームオーバー")
             return
-
+        
+        bb_rct.move_ip(avx, avy)
+        
         pg.display.update()
         tmr += 1
         clock.tick(50)
