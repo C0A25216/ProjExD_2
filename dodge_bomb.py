@@ -44,16 +44,33 @@ def gameover(screen: pg.Surface) -> None:
     time.sleep(5)
     return
 
+#2.時間とともに爆弾が拡大，加速する関数
+def init_bb_imgs() -> tuple[list[pg.Surface],list[int]]:
+    """
+    時間とともに爆弾が拡大，加速する関数
+    引数:Surface
+    返り値:爆弾の大きさ、速さ
+    """
+    bb_imgs = []
+    for r in range(1, 11):
+        bb_img = pg.Surface((20*r, 20*r))
+        pg.draw.circle(bb_img, (255, 0, 0), (10*r, 10*r), 10*r)
+        bb_img.set_colorkey((0, 0, 0))
+        bb_imgs.append(bb_img)
+    bb_accs = [a for a in range(1, 11)]
+    return bb_imgs, bb_accs
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")    
     kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
 
-    #爆弾の初期化
-    bb_img = pg.Surface((20, 20))        
-    pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10) 
-    bb_img.set_colorkey((0, 0, 0))          
+
+
+    #爆弾動き方
+    bb_imgs, bb_accs = init_bb_imgs()
+    bb_img = bb_imgs[0]       
     bb_rct = bb_img.get_rect()             
     bb_rct.centerx = random.randint(0, WIDTH)
     bb_rct.centery = random.randint(0, HEIGHT)
@@ -68,6 +85,13 @@ def main():
             if event.type == pg.QUIT: 
                 return
         screen.blit(bg_img, [0, 0]) 
+
+        #爆弾
+        avx = vx*bb_accs[min(tmr//500, 9)] #このavxとavyをmove_ipメソッドに渡す
+        avy = vy*bb_accs[min(tmr//500, 9)]
+        bb_img = bb_imgs[min(tmr//500, 9)]
+        bb_rct.move_ip(avx, avy)
+
         
         #跳ね返り
         yoko, tate = check_bound(bb_rct)
