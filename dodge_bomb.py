@@ -70,6 +70,9 @@ def main():
         bb_rct.move_ip(vx, vy) 
         screen.blit(bb_img, bb_rct)
 
+        if kk_rct.colliderect(bb_rct):
+            return
+
         pg.display.update()
         tmr += 1
         clock.tick(50)
