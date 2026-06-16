@@ -2,6 +2,7 @@ import os
 import sys
 import pygame as pg
 import random
+import time
 
 
 WIDTH, HEIGHT = 1100, 650
@@ -22,6 +23,26 @@ def check_bound(rct:pg.Rect) -> tuple[bool,bool]:
         tate = False
     
     return yoko,tate
+
+#1ゲームオーバー
+def gameover(screen: pg.Surface) -> None:
+    """
+    ゲームオーバー画面を表示する関数
+    引数:screen
+    """
+    black_image = pg.Surface((WIDTH,HEIGHT))
+    pg.draw.rect(black_image, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
+    black_image.set_alpha(200)
+    font = pg.font.Font(None,80)
+    txt = font.render("Game Over",True,(255,255,255))
+    black_image.blit(txt,[400,300])
+    kk_cry_img = pg.image.load("fig/8.png")
+    black_image.blit(kk_cry_img,[330,290])
+    black_image.blit(kk_cry_img,[730,290])
+    screen.blit(black_image,[0,0])
+    pg.display.update()
+    time.sleep(5)
+    return
 
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
@@ -70,7 +91,10 @@ def main():
         bb_rct.move_ip(vx, vy) 
         screen.blit(bb_img, bb_rct)
 
+        #ゲームオーバー
         if kk_rct.colliderect(bb_rct):
+            gameover(screen)
+            print("ゲームオーバー")
             return
 
         pg.display.update()
